@@ -1550,7 +1550,7 @@ local Whitelist = {
     "TigerStarry2023",
     "MaxGhostNight",
 	"NightStealth72",
-	"1",
+	"olalalalaalalal3",
 	"2",
 	"3",
     "4" 
