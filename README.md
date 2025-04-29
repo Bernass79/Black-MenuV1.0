@@ -1386,7 +1386,7 @@ local function deletarNotifyGui()
 end
 
 -- Lista de itens para pegar
-local itens = {"AK47", "Uzi", "Parafal", "Faca", "IA2", "G3", "IPhone 14", "Agua", "Hamburguer", "Hi Power", "Natalina"}
+local itens = {"AK47", "Uzi", " Planta Limpa", "IA2",  "Parafal", "Faca", "AR-15", "Glock 17", "IA2", "G3", "IPhone 14", "Agua", "Hamburguer", "Hi Power", "Natalina"}
 
 -- Argumentos para a requisição
 local args = {
