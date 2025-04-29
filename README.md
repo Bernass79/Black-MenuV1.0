@@ -362,27 +362,136 @@ local Button = Tab:CreateButton({
 })
 
 
-local Tab = Window:CreateTab("PVP", 15990136399)
-local Button = Tab:CreateButton({ Name = "Aimbot 🎯", Callback = function() 
-    print("Aimbot ativado!")
-	--// Cache
 
+local Tab = Window:CreateTab("PVP", 15990136399)
+
+--// Criar ScreenGui (inicialmente desativada)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AimbotGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
+screenGui.Enabled = false -- Começa desativada
+
+--// Criar Frame arrastável
+local frame = Instance.new("Frame")
+frame.Name = "AimbotFrame"
+frame.Size = UDim2.new(0, 220, 0, 150)
+frame.Position = UDim2.new(0.5, -110, 0.1, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = screenGui
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+--// Criar TextButton para ativar/desativar aimbot
+local button = Instance.new("TextButton")
+button.Name = "AimbotButton"
+button.Size = UDim2.new(0.9, 0, 0.2, 0)
+button.Position = UDim2.new(0.05, 0, 0.1, 0)
+button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 18
+button.Text = "Ativar Aimbot 🎯"
+button.Parent = frame
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = button
+
+--// Criar TextLabel para mostrar o FOV
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Name = "FovLabel"
+fovLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
+fovLabel.Position = UDim2.new(0.05, 0, 0.35, 0)
+fovLabel.BackgroundTransparency = 1
+fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovLabel.Font = Enum.Font.Gotham
+fovLabel.TextSize = 16
+fovLabel.Text = "FOV: 90"
+fovLabel.Parent = frame
+
+--// Criar botões + e - para ajustar FOV
+local plusButton = Instance.new("TextButton")
+plusButton.Name = "PlusButton"
+plusButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+plusButton.Position = UDim2.new(0.75, 0, 0.35, 0)
+plusButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+plusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+plusButton.Font = Enum.Font.GothamBold
+plusButton.TextSize = 18
+plusButton.Text = "+"
+plusButton.Parent = frame
+local plusCorner = Instance.new("UICorner")
+plusCorner.CornerRadius = UDim.new(0, 8)
+plusCorner.Parent = plusButton
+
+local minusButton = Instance.new("TextButton")
+minusButton.Name = "MinusButton"
+minusButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+minusButton.Position = UDim2.new(0.05, 0, 0.35, 0)
+minusButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minusButton.Font = Enum.Font.GothamBold
+minusButton.TextSize = 18
+minusButton.Text = "-"
+minusButton.Parent = frame
+local minusCorner = Instance.new("UICorner")
+minusCorner.CornerRadius = UDim.new(0, 8)
+minusCorner.Parent = minusButton
+
+--// Criar toggle para TeamCheck
+local teamCheckToggle = Instance.new("TextButton")
+teamCheckToggle.Name = "TeamCheckToggle"
+teamCheckToggle.Size = UDim2.new(0.9, 0, 0.2, 0)
+teamCheckToggle.Position = UDim2.new(0.05, 0, 0.6, 0)
+teamCheckToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+teamCheckToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+teamCheckToggle.Font = Enum.Font.GothamBold
+teamCheckToggle.TextSize = 18
+teamCheckToggle.Text = "TeamCheck: OFF"
+teamCheckToggle.Parent = frame
+local teamCheckCorner = Instance.new("UICorner")
+teamCheckCorner.CornerRadius = UDim.new(0, 8)
+teamCheckCorner.Parent = teamCheckToggle
+
+--// Criar botão para minimizar/maximizar UI
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Name = "MinimizeButton"
+minimizeButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+minimizeButton.Position = UDim2.new(0.95, 0, 0.05, 0)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextSize = 14
+minimizeButton.Text = "-"
+minimizeButton.Parent = frame
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(0, 4)
+minimizeCorner.Parent = minimizeButton
+
+--// Variáveis de controle
+local aimbotEnabled = false
+local minimized = false
+local originalSize = frame.Size
+local minimizedSize = UDim2.new(0, 50, 0, 50)
+
+--// Cache
 local select = select
 local pcall, getgenv, next, Vector2, mathclamp, type, mousemoverel = select(1, pcall, getgenv, next, Vector2.new, math.clamp, type, mousemoverel or (Input and Input.MouseMove))
 
---// Preventing Multiple Processes
-
+--// Previne múltiplos processos
 pcall(function()
-	getgenv().Aimbot.Functions:Exit()
+    getgenv().Aimbot.Functions:Exit()
 end)
 
---// Environment
-
+--// Ambiente
 getgenv().Aimbot = {}
 local Environment = getgenv().Aimbot
 
---// Services
-
+--// Serviços
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -390,235 +499,234 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
---// Variables
+--// Variáveis
+local RequiredDistance, Typing, Animation, ServiceConnections = 2000, false, nil, {}
 
-local RequiredDistance, Typing, Running, Animation, ServiceConnections = 2000, false, false, nil, {}
-
---// Script Settings
-
+--// Configurações do script
 Environment.Settings = {
-	Enabled = true,
-	TeamCheck = false,
-	AliveCheck = true,
-	WallCheck = false, -- Laggy
-	Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
-	ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
-	ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-	TriggerKey = "MouseButton2",
-	Toggle = false,
-	LockPart = "Head" -- Body part to lock on
+    Enabled = true,
+    TeamCheck = false,
+    AliveCheck = true,
+    WallCheck = false,
+    Sensitivity = 0,
+    ThirdPerson = false,
+    ThirdPersonSensitivity = 3,
+    LockPart = "Head"
 }
 
 Environment.FOVSettings = {
-	Enabled = true,
-	Visible = true,
-	Amount = 90,
-	Color = Color3.fromRGB(0, 0, 0),
-	LockedColor = Color3.fromRGB(255, 70, 70),
-	Transparency = 0.5,
-	Sides = 60,
-	Thickness = 1,
-	Filled = false
+    Enabled = true,
+    Visible = true,
+    Amount = 90,
+    Color = Color3.fromRGB(0, 0, 0),
+    LockedColor = Color3.fromRGB(255, 70, 70),
+    Transparency = 0.5,
+    Sides = 60,
+    Thickness = 1,
+    Filled = false
 }
 
 Environment.FOVCircle = Drawing.new("Circle")
 
---// Functions
-
+--// Funções
 local function CancelLock()
-	Environment.Locked = nil
-	if Animation then Animation:Cancel() end
-	Environment.FOVCircle.Color = Environment.FOVSettings.Color
+    Environment.Locked = nil
+    if Animation then Animation:Cancel() end
+    Environment.FOVCircle.Color = Environment.FOVSettings.Color
 end
 
 local function GetClosestPlayer()
-	if not Environment.Locked then
-		RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000)
+    if not Environment.Locked then
+        RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000)
 
-		for _, v in next, Players:GetPlayers() do
-			if v ~= LocalPlayer then
-				if v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
-					if Environment.Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
-					if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
-					if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+        for _, v in next, Players:GetPlayers() do
+            if v ~= LocalPlayer then
+                if v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
+                    if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+                    if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+                    if Environment.Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
 
-					local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
-					local Distance = (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Vector.X, Vector.Y)).Magnitude
+                    local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
+                    local Distance = (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Vector.X, Vector.Y)).Magnitude
 
-					if Distance < RequiredDistance and OnScreen then
-						RequiredDistance = Distance
-						Environment.Locked = v
-					end
-				end
-			end
-		end
-	elseif (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).X, Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).Y)).Magnitude > RequiredDistance then
-		CancelLock()
-	end
+                    if Distance < RequiredDistance and OnScreen then
+                        RequiredDistance = Distance
+                        Environment.Locked = v
+                    end
+                end
+            end
+        end
+    elseif (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).X, Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).Y)).Magnitude > RequiredDistance then
+        CancelLock()
+    end
 end
 
---// Typing Check
-
+--// Verificação de digitação
 ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
-	Typing = true
+    Typing = true
 end)
 
 ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
-	Typing = false
+    Typing = false
 end)
 
---// Main
-
+--// Loop principal
 local function Load()
-	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
-		if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
-			Environment.FOVCircle.Radius = Environment.FOVSettings.Amount
-			Environment.FOVCircle.Thickness = Environment.FOVSettings.Thickness
-			Environment.FOVCircle.Filled = Environment.FOVSettings.Filled
-			Environment.FOVCircle.NumSides = Environment.FOVSettings.Sides
-			Environment.FOVCircle.Color = Environment.FOVSettings.Color
-			Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
-			Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
-			Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
-		else
-			Environment.FOVCircle.Visible = false
-		end
+    ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
+        -- Círculo de FOV só aparece se o aimbot estiver ativado
+        if aimbotEnabled and Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
+            Environment.FOVCircle.Radius = Environment.FOVSettings.Amount
+            Environment.FOVCircle.Thickness = Environment.FOVSettings.Thickness
+            Environment.FOVCircle.Filled = Environment.FOVSettings.Filled
+            Environment.FOVCircle.NumSides = Environment.FOVSettings.Sides
+            Environment.FOVCircle.Color = Environment.FOVSettings.Color
+            Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
+            Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
+            Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+        else
+            Environment.FOVCircle.Visible = false
+        end
 
-		if Running and Environment.Settings.Enabled then
-			GetClosestPlayer()
+        if aimbotEnabled and Environment.Settings.Enabled then
+            GetClosestPlayer()
 
-			if Environment.Locked then
-				if Environment.Settings.ThirdPerson then
-					Environment.Settings.ThirdPersonSensitivity = mathclamp(Environment.Settings.ThirdPersonSensitivity, 0.1, 5)
-
-					local Vector = Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position)
-					mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * Environment.Settings.ThirdPersonSensitivity, (Vector.Y - UserInputService:GetMouseLocation().Y) * Environment.Settings.ThirdPersonSensitivity)
-				else
-					if Environment.Settings.Sensitivity > 0 then
-						Animation = TweenService:Create(Camera, TweenInfo.new(Environment.Settings.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)})
-						Animation:Play()
-					else
-						Camera.CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)
-					end
-				end
-
-			Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
-
-			end
-		end
-	end)
-
-	ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
-		if not Typing then
-			pcall(function()
-				if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
-					if Environment.Settings.Toggle then
-						Running = not Running
-
-						if not Running then
-							CancelLock()
-						end
-					else
-						Running = true
-					end
-				end
-			end)
-
-			pcall(function()
-				if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
-					if Environment.Settings.Toggle then
-						Running = not Running
-
-						if not Running then
-							CancelLock()
-						end
-					else
-						Running = true
-					end
-				end
-			end)
-		end
-	end)
-
-	ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
-		if not Typing then
-			if not Environment.Settings.Toggle then
-				pcall(function()
-					if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
-						Running = false; CancelLock()
-					end
-				end)
-
-				pcall(function()
-					if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
-						Running = false; CancelLock()
-					end
-				end)
-			end
-		end
-	end)
+            if Environment.Locked then
+                if Environment.Settings.ThirdPerson then
+                    Environment.Settings.ThirdPersonSensitivity = math.clamp(Environment.Settings.ThirdPersonSensitivity, 0.1, 5)
+                    local Vector = Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position)
+                    mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * Environment.Settings.ThirdPersonSensitivity, (Vector.Y - UserInputService:GetMouseLocation().Y) * Environment.Settings.ThirdPersonSensitivity)
+                else
+                    if Environment.Settings.Sensitivity > 0 then
+                        Animation = TweenService:Create(Camera, TweenInfo.new(Environment.Settings.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)})
+                        Animation:Play()
+                    else
+                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)
+                    end
+                end
+                Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
+            end
+        end
+    end)
 end
 
---// Functions
-
+--// Funções adicionais
 Environment.Functions = {}
 
 function Environment.Functions:Exit()
-	for _, v in next, ServiceConnections do
-		v:Disconnect()
-	end
-
-	if Environment.FOVCircle.Remove then Environment.FOVCircle:Remove() end
-
-	getgenv().Aimbot.Functions = nil
-	getgenv().Aimbot = nil
-	
-	Load = nil; GetClosestPlayer = nil; CancelLock = nil
+    for _, v in next, ServiceConnections do
+        v:Disconnect()
+    end
+    if Environment.FOVCircle.Remove then Environment.FOVCircle:Remove() end
+    getgenv().Aimbot = nil
 end
 
 function Environment.Functions:Restart()
-	for _, v in next, ServiceConnections do
-		v:Disconnect()
-	end
-
-	Load()
+    for _, v in next, ServiceConnections do
+        v:Disconnect()
+    end
+    Load()
 end
 
 function Environment.Functions:ResetSettings()
-	Environment.Settings = {
-		Enabled = true,
-		TeamCheck = false,
-		AliveCheck = true,
-		WallCheck = false,
-		Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
-		ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
-		ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-		TriggerKey = "MouseButton2",
-		Toggle = false,
-		LockPart = "black" -- Body part to lock on
-	}
-
-	Environment.FOVSettings = {
-		Enabled = true,
-		Visible = true,
-		Amount = 90,
-		Color = Color3.fromRGB(0, 0, 0), --Preto
-		LockedColor = Color3.fromRGB(255, 70, 70),
-		Transparency = 0.5,
-		Sides = 60,
-		Thickness = 1,
-		Filled = false
-	}
+    Environment.Settings = {
+        Enabled = true,
+        TeamCheck = false,
+        AliveCheck = true,
+        WallCheck = false,
+        Sensitivity = 0,
+        ThirdPerson = false,
+        ThirdPersonSensitivity = 3,
+        LockPart = "Head"
+    }
+    Environment.FOVSettings = {
+        Enabled = true,
+        Visible = true,
+        Amount = 90,
+        Color = Color3.fromRGB(0, 0, 0),
+        LockedColor = Color3.fromRGB(255, 70, 70),
+        Transparency = 0.5,
+        Sides = 60,
+        Thickness = 1,
+        Filled = false
+    }
 end
 
---// Load
+--// Rayfield Keybind para ativar/desativar aimbot
 
+
+local Keybind = Tab:CreateKeybind({
+    Name = "Ativar/Desativar Aimbot",
+    CurrentKeybind = "E",
+    Flag = "AimbotKeybind",
+    Callback = function(Key)
+        aimbotEnabled = not aimbotEnabled
+        Toggle:Set(aimbotEnabled) -- Sincroniza o toggle com o keybind
+        button.Text = aimbotEnabled and "Desativar Aimbot 🎯" or "Ativar Aimbot 🎯"
+        print(aimbotEnabled and "Aimbot ativado!" or "Aimbot desativado!")
+        if not aimbotEnabled then
+            CancelLock()
+        end
+    end
+})
+
+--// Conectar botões da UI flutuante
+button.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    Toggle:Set(aimbotEnabled) -- Sincroniza o toggle do Rayfield
+    button.Text = aimbotEnabled and "Desativar Aimbot 🎯" or "Ativar Aimbot 🎯"
+    print(aimbotEnabled and "Aimbot ativado!" or "Aimbot desativado!")
+    if not aimbotEnabled then
+        CancelLock()
+    end
+end)
+
+plusButton.MouseButton1Click:Connect(function()
+    Environment.FOVSettings.Amount = math.clamp(Environment.FOVSettings.Amount + 10, 10, 500)
+    fovLabel.Text = "FOV: " .. Environment.FOVSettings.Amount
+end)
+
+minusButton.MouseButton1Click:Connect(function()
+    Environment.FOVSettings.Amount = math.clamp(Environment.FOVSettings.Amount - 10, 10, 500)
+    fovLabel.Text = "FOV: " .. Environment.FOVSettings.Amount
+end)
+
+teamCheckToggle.MouseButton1Click:Connect(function()
+    Environment.Settings.TeamCheck = not Environment.Settings.TeamCheck
+    teamCheckToggle.Text = "TeamCheck: " .. (Environment.Settings.TeamCheck and "ON" or "OFF")
+end)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        frame.Size = minimizedSize
+        minimizeButton.Text = "+"
+        button.Visible = false
+        fovLabel.Visible = false
+        plusButton.Visible = false
+        minusButton.Visible = false
+        teamCheckToggle.Visible = false
+    else
+        frame.Size = originalSize
+        minimizeButton.Text = "-"
+        button.Visible = true
+        fovLabel.Visible = true
+        plusButton.Visible = true
+        minusButton.Visible = true
+        teamCheckToggle.Visible = true
+    end
+end)
+
+--// Botão principal para abrir a UI flutuante
+local Button = Tab:CreateButton({
+    Name = "Abrir UI Aimbot 🎯",
+    Callback = function()
+        screenGui.Enabled = not screenGui.Enabled
+        print(screenGui.Enabled and "UI Aimbot aberta!" or "UI Aimbot fechada!")
+    end
+})
+
+--// Inicia o script
 Load()
-end })
-
-
-
-
 
 
 
@@ -1296,7 +1404,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-
 local player = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
@@ -1304,10 +1411,12 @@ local RunService = game:GetService("RunService")
 
 -- Variáveis de configuração
 local flying = false
-local flySpeed = 20 -- Velocidade inicial reduzida
-local minSpeed = 5 -- Velocidade mínima reduzida
-local maxSpeed = 100 -- Velocidade máxima reduzida
-local speedStep = 5 -- Incremento da velocidade reduzido
+local flySpeed = 20 -- Velocidade inicial
+local minSpeed = 5 -- Velocidade mínima
+local maxSpeed = 100 -- Velocidade máxima
+local speedStep = 5 -- Incremento da velocidade
+local antiFallEnabled = false -- Estado do Anti-Dano de Queda
+local uiMinimized = false -- Estado da UI (normal ou minimizada)
 
 -- Criar ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -1318,7 +1427,7 @@ screenGui.ResetOnSpawn = false
 -- Criar Frame arrastável
 local frame = Instance.new("Frame")
 frame.Name = "FlyFrame"
-frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Size = UDim2.new(0, 220, 0, 120) -- Tamanho normal
 frame.Position = UDim2.new(0.5, -110, 0.1, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
@@ -1385,6 +1494,36 @@ local minusCorner = Instance.new("UICorner")
 minusCorner.CornerRadius = UDim.new(0, 8)
 minusCorner.Parent = minusButton
 
+-- Criar toggle para Anti-Dano de Queda
+local antiFallToggle = Instance.new("TextButton")
+antiFallToggle.Name = "AntiFallToggle"
+antiFallToggle.Size = UDim2.new(0.9, 0, 0.2, 0)
+antiFallToggle.Position = UDim2.new(0.05, 0, 0.7, 0)
+antiFallToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+antiFallToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+antiFallToggle.Font = Enum.Font.GothamBold
+antiFallToggle.TextSize = 18
+antiFallToggle.Text = "Anti-Dano: OFF"
+antiFallToggle.Parent = frame
+local antiFallCorner = Instance.new("UICorner")
+antiFallCorner.CornerRadius = UDim.new(0, 8)
+antiFallCorner.Parent = antiFallToggle
+
+-- Criar botão para minimizar/maximizar UI
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Name = "MinimizeButton"
+minimizeButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+minimizeButton.Position = UDim2.new(0.95, 0, 0.05, 0) -- Canto superior direito
+minimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextSize = 14
+minimizeButton.Text = "-"
+minimizeButton.Parent = frame
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(0, 4)
+minimizeCorner.Parent = minimizeButton
+
 -- Função para desativar colisões do personagem
 local function disableCollisions(character)
     for _, part in pairs(character:GetDescendants()) do
@@ -1399,6 +1538,22 @@ local function enableCollisions(character)
     for _, part in pairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
             part.CanCollide = true
+        end
+    end
+end
+
+-- Função para Anti-Dano de Queda
+local function antiFallDamage()
+    while antiFallEnabled do
+        task.wait(0.1)
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if humanoid and rootPart and not flying then
+                if rootPart.Velocity.Y < -50 then
+                    rootPart.Velocity = Vector3.new(rootPart.Velocity.X, 0, rootPart.Velocity.Z)
+                end
+            end
         end
     end
 end
@@ -1452,11 +1607,11 @@ local function startFlying()
         -- Normalizar a direção e aplicar velocidade proporcional ao deltaTime
         if moveDirection.Magnitude > 0 then
             moveDirection = moveDirection.Unit
-            local speed = flySpeed * deltaTime * 30 -- Multiplicador reduzido para movimento mais lento
+            local speed = flySpeed * deltaTime * 30 -- Multiplicador para movimento suave
             -- Desancorar temporariamente para mover
             humanoidRootPart.Anchored = false
             humanoidRootPart.CFrame = humanoidRootPart.CFrame + moveDirection * speed
-            -- Alinhar orientação apenas no eixo Y (yaw) com a câmera
+            -- Alinhar orientação apenas no eixo Y (yaw) com a câmera (olhar para frente)
             local lookVector = camera.CFrame.LookVector
             humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.atan2(lookVector.X, lookVector.Z), 0)
             -- Reancorar para evitar quedas
@@ -1492,6 +1647,55 @@ button.MouseButton1Click:Connect(function()
         stopFlying()
     else
         startFlying()
+    end
+end)
+
+-- Conectar o toggle de Anti-Dano de Queda
+antiFallToggle.MouseButton1Click:Connect(function()
+    antiFallEnabled = not antiFallEnabled
+    antiFallToggle.Text = "Anti-Dano: " .. (antiFallEnabled and "ON" or "OFF")
+    antiFallToggle.BackgroundColor3 = antiFallEnabled and Color3.fromRGB(100, 50, 50) or Color3.fromRGB(60, 60, 60)
+    if antiFallEnabled then
+        task.spawn(antiFallDamage)
+    end
+end)
+
+-- Função para minimizar/maximizar a UI
+local function toggleUIMinimize()
+    if uiMinimized then
+        -- Maximizar
+        frame.Size = UDim2.new(0, 220, 0, 120)
+        button.Size = UDim2.new(0.9, 0, 0.3, 0)
+        speedLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
+        plusButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+        minusButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+        antiFallToggle.Size = UDim2.new(0.9, 0, 0.2, 0)
+        minimizeButton.Text = "-"
+        uiMinimized = false
+    else
+        -- Minimizar
+        frame.Size = UDim2.new(0, 150, 0, 80)
+        button.Size = UDim2.new(0.9, 0, 0.4, 0)
+        speedLabel.Size = UDim2.new(0.9, 0, 0.3, 0)
+        plusButton.Size = UDim2.new(0.2, 0, 0.3, 0)
+        minusButton.Size = UDim2.new(0.2, 0, 0.3, 0)
+        antiFallToggle.Size = UDim2.new(0.9, 0, 0.3, 0)
+        minimizeButton.Text = "+"
+        uiMinimized = true
+    end
+end
+
+-- Conectar o botão de minimizar
+minimizeButton.MouseButton1Click:Connect(toggleUIMinimize)
+
+-- Atalho com tecla G para ligar/desligar o FlyCframe
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.G then
+        if flying then
+            stopFlying()
+        else
+            startFlying()
+        end
     end
 end)
 
@@ -1547,13 +1751,13 @@ end)
 
 -- Lista de nicks permitidos (whitelist)
 local Whitelist = {
-    "TigerStarry2023",
+    "ZoeEagle81",
     "MaxGhostNight",
 	"NightStealth72",
 	"olalalalaalalal3",
-	"2",
-	"3",
-    "4" 
+	"Vict0riaPuls3V3n0mYT",
+	"Moon_Hunter20043",
+	"Moon_Hunter20043",
 }
 
 -- Função para verificar se o jogador está na whitelist
